@@ -32,8 +32,7 @@ public class BookApplication {
 
 	}
 
-	private void runConsole(){
-		
+	public void runConsole(){
 		boolean isAdmin = false, isBuyer = false;
 		BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 		HttpHeaders headers = new HttpHeaders();
@@ -171,13 +170,3 @@ public class BookApplication {
 	}
 
 }
-
-/*
- * 				System.out.print("Enter command:");
-				String command = reader.readLine();
-				RestTemplate restTemplate = new RestTemplate();
-				Show s = new Show(3L, 10,26,3);
-				HttpEntity<Show> request = new HttpEntity<>(s, headers);
-				ResponseEntity<?> response = restTemplate.postForEntity(apiUrl, request, Object.class);
-				System.out.println(response.getBody());
- */
