@@ -17,8 +17,8 @@ import com.sample.movie.demo.model.ViewResponse;
 
 @Repository
 public class ShowRepository {
-    private final static HashMap<Long, Show> SHOWS = new HashMap<>();
-    private final static HashMap<String, Bookings> BOOKINGS = new HashMap<>();
+    private final HashMap<Long, Show> SHOWS = new HashMap<>();
+    private final HashMap<String, Bookings> BOOKINGS = new HashMap<>();
     private Long showId = 1L;
     private Long ticketNumberCounter = 0L;
 
@@ -94,7 +94,6 @@ public class ShowRepository {
                 seatsAvailable += seat + ",";
             }
         }
-
         return seatsAvailable;
 
     }

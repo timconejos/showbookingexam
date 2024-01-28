@@ -19,6 +19,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import com.sample.movie.demo.controller.BookingController;
 import com.sample.movie.demo.controller.ShowController;
 import com.sample.movie.demo.exception.BookingException;
 import com.sample.movie.demo.model.BookRequest;
@@ -35,33 +36,38 @@ class ShowControllerTests {
     @InjectMocks
     private ShowController showController;
 
+    @InjectMocks
+    private BookingController bookingController;
+
     @Test
     void adminViewShow_ValidId_ReturnsOKResponse() throws BookingException {
         ViewResponse mockViewResponse = new ViewResponse(1L, new ArrayList<>());
-        Mockito.when(showRepository.getViewResponse(anyLong())).thenReturn(mockViewResponse);
+        Show mockShow = new Show(1L,2,2,2);
+        Mockito.when(showRepository.getShow(anyLong())).thenReturn(mockShow);
 
-        ResponseEntity<?> response = showController.adminViewShow(1L);
+        ResponseEntity<?> response = showController.viewShow(1L);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
     }
+
 
     @Test
     void adminViewShow_ValidId_ReturnsBadResponse() throws BookingException {
         ViewResponse mockViewResponse = null;
         Mockito.when(showRepository.getViewResponse(anyLong())).thenReturn(mockViewResponse);
 
-        ResponseEntity<?> response = showController.adminViewShow(1L);
+        ResponseEntity<?> response = showController.viewShow(1L);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
 
     @Test
     void adminSetupShow_ValidShow_ReturnsOkResponse() throws BookingException {
-        Show mockShow = new Show(/* Mock your Show here */);
+        Show mockShow = new Show(1L,2,2,2);
 
         when(showRepository.setupShow(any(Show.class))).thenReturn(mockShow);
 
-        ResponseEntity<?> response = showController.adminSetupShow(mockShow);
+        ResponseEntity<?> response = showController.setupShow(mockShow);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         // Add more assertions if needed
@@ -71,7 +77,7 @@ class ShowControllerTests {
     void adminSetupShow_ExceptionThrown_ReturnsBadRequestResponse() throws BookingException {
         when(showRepository.setupShow(any(Show.class))).thenThrow(new BookingException("Error"));
 
-        ResponseEntity<?> response = showController.adminSetupShow(new Show());
+        ResponseEntity<?> response = showController.setupShow(new Show());
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
@@ -81,7 +87,7 @@ class ShowControllerTests {
         String mockAvailableSeats = "A1,A2,A3";
         when(showRepository.getAvailSeats(anyLong())).thenReturn(mockAvailableSeats);
 
-        ResponseEntity<?> response = showController.userAvailSeats(1L);
+        ResponseEntity<?> response = bookingController.availSeats(1L);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         // Add more assertions if needed
@@ -89,9 +95,9 @@ class ShowControllerTests {
 
     @Test
     void userAvailSeats_ExceptionThrown_ReturnsBadRequestResponse() throws BookingException{
-        when(showRepository.getAvailSeats(anyLong())).thenThrow(new RuntimeException("Error"));
 
-        ResponseEntity<?> response = showController.userAvailSeats(2L);
+        when(showRepository.getAvailSeats(anyLong())).thenThrow(new BookingException("ERROR"));
+        ResponseEntity<?> response = bookingController.availSeats(2L);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
@@ -99,12 +105,11 @@ class ShowControllerTests {
     @Test
     void userBookShow_ValidRequest_ReturnsOkResponse() throws BookingException {
         BookRequest mockBookRequest = new BookRequest("123456", "A1,A2,A3");
-        ArrayList<String> mockBookList = new ArrayList<>();
         String mockTicketNumber = "T123";
 
         when(showRepository.bookShow(anyLong(), anyString(), anyList())).thenReturn(mockTicketNumber);
 
-        ResponseEntity<?> response = showController.userBookShow(1L, mockBookRequest);
+        ResponseEntity<?> response = bookingController.bookShow(1L, mockBookRequest);
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         // Add more assertions if needed
@@ -116,7 +121,7 @@ class ShowControllerTests {
         when(showRepository.bookShow(anyLong(), anyString(), anyList()))
                 .thenThrow(new BookingException("Error"));
 
-        ResponseEntity<?> response = showController.userBookShow(1L, mockBookRequest);
+        ResponseEntity<?> response = bookingController.bookShow(1L, mockBookRequest);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
@@ -124,7 +129,7 @@ class ShowControllerTests {
     @Test
     void userCancelSeats_ValidRequest_ReturnsOkResponse() throws BookingException{
         doNothing().when(showRepository).cancelSeats(anyString(), anyString());
-        ResponseEntity<?> response = showController.userCancelSeats("showId", "123456");
+        ResponseEntity<?> response = bookingController.cancelSeats("showId", "123456");
 
         assertEquals(HttpStatus.OK, response.getStatusCode());
         // Add more assertions if needed
@@ -132,13 +137,30 @@ class ShowControllerTests {
 
     @Test
     void userCancelSeats_ExceptionThrown_ReturnsBadRequestResponse() throws BookingException{
-        // Mock the void method to throw an exception
-        doThrow(new RuntimeException("Error")).when(showRepository).cancelSeats(anyString(), anyString());
+        doThrow(new BookingException("Error")).when(showRepository).cancelSeats(anyString(), anyString());
 
-        // Perform the operation that calls the mocked method
-        ResponseEntity<?> response = showController.userCancelSeats("showId", "123456");
+        ResponseEntity<?> response = bookingController.cancelSeats("showId", "123456");
 
-        // Add assertions based on your application logic
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    }
+
+    @Test
+    void userBookShow_EmptySeatList_ReturnsBadRequestResponse() throws BookingException {
+        BookRequest mockBookRequest = new BookRequest("123456", "");
+        when(showRepository.bookShow(anyLong(), anyString(), anyList()))
+                .thenThrow(new BookingException("Error"));
+
+        ResponseEntity<?> response = bookingController.bookShow(1L, mockBookRequest);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+    }
+
+    @Test
+    void userCancelSeats_InvalidShowId_ReturnsBadRequestResponse() throws BookingException{
+        doThrow(new BookingException("INVALID SHOW ID")).when(showRepository).cancelSeats(anyString(), anyString());
+
+        ResponseEntity<?> response = bookingController.cancelSeats("invalidShowId", "123456");
+
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
 }
