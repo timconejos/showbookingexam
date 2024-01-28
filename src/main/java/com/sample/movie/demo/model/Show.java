@@ -40,5 +40,10 @@ public class Show {
     public void setCancellationWindow(int cancellationWindow) {
         this.cancellationWindow = cancellationWindow;
     }
+    
+    public Seat getSeat(String seatNumber) {
+        return seats.get(seatNumber);
+    }
+
 
 }
